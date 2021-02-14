@@ -18,18 +18,6 @@ class Tateti():
 	Clase que define un tablero de tateti
 	'''
 
-	posGanadoras = (
-		(0,1,2),
-		(3,4,5),
-		(6,7,8),
-		(0,3,6),
-		(1,4,5),
-		(2,5,8),
-		(0,4,8),
-		(2,4,6),
-
-	)
-
 	def __init__(self):
 		
 		self.tablero  = [
@@ -62,22 +50,23 @@ class Tateti():
 		print('')
 
 
-	def jugar(self, tipo, fila, columna=None):
+	def jugar(self, ficha, fila, columna=None):
 		'''
-		Define el caracter de una pieza del tablero.
+		Define el carácter de una pieza del tablero.
 		Si se pasa solo el parametro fila, es como las teclas
 		de un teléfono.
 		Si se pasa fila y columna, es como las coordenadas de una
 		celda de una matriz.
 		'''
-		if tipo not in [NADA, X, O]:
-			raise ValueError("'tipo' debe ser NADA, X o O")
+
+		if ficha not in [NADA, X, O]:
+			raise ValueError("'ficha' debe ser NADA, X o O")
 		
 		if columna == None:
 			if fila > 9 or fila < 1:
 				raise ValueError("'fila' debe estar entre 1 y 9")
 			
-			self.tablero[fila-1] = tipo
+			self.tablero[fila-1] = ficha
 
 		else:
 			if columna > 3 or columna < 1:
@@ -85,13 +74,87 @@ class Tateti():
 			if fila > 3 or fila < 1:
 				raise ValueError("'fila' debe estar entre 1 y 3")
 
-			self.tablero[ (fila-1)*3 + columna -1] = tipo
+			self.tablero[ (fila-1)*3 + columna -1] = ficha
 
 
+	def reiniciar(self):
+		'''
+		Reinicia el tablero
+		'''
 
+		self.tablero  = [
+			NADA, NADA, NADA,
+			NADA, NADA, NADA,
+			NADA, NADA, NADA
+		]
 
-# Prueba
-x = Tateti()
-x.jugar(X,1,1)
-x.jugar(X, 5)
-x.ver()
+	
+	def gano(self, ficha):
+		'''
+		Devuelve True si 'ficha' ganó, si no devuelve False
+		'''
+
+		posGanadoras = (
+			(0,1,2),
+			(3,4,5),
+			(6,7,8),
+			(0,3,6),
+			(1,4,7),
+			(2,5,8),
+			(0,4,8),
+			(2,4,6),
+		)
+
+		if ficha not in [NADA, X, O]:
+			raise ValueError("'ficha' debe ser NADA, X o O")		
+
+		posConFicha=[]
+		for indice, celda in enumerate(self.tablero):
+			if celda == ficha:
+				posConFicha.append(indice)
+
+		for pos in posGanadoras:
+			if pos[0] in posConFicha:
+				if pos[1] in posConFicha:
+					if pos[2] in posConFicha:
+						return True
+					else:
+						continue
+				else:
+					continue
+			else:
+				continue
+		return False
+
+# Pruebas
+
+posGanadoras = (
+	(0,1,2),
+	(3,4,5),
+	(6,7,8),
+	(0,3,6),
+	(1,4,7),
+	(2,5,8),
+	(0,4,8),
+	(2,4,6),
+)
+x=Tateti()
+
+# for pos in posGanadoras:
+# 	for indice in pos:
+# 		x.jugar(X,indice+1)
+# 	x.ver()
+# 	assert x.gano(X)
+# 	x.reiniciar()
+
+from random import randrange
+for i in range(10):
+	pos = []
+	posibil = list(range(9))
+	for ii in range(3):
+		pos.append(posibil.pop(randrange(len(posibil))))
+	for indice in pos:
+		x.jugar(X,indice+1)
+	x.ver()
+	print(x.gano(X))
+	x.reiniciar()
