@@ -9,7 +9,10 @@ Valentin Berman   13/02/20
 NADA = '-'
 X = 'x'
 O = 'o'
-
+MOV = 'hay movimientos'
+GANA_X = 'ganó X'
+GANA_O = 'ganó O'
+EMPATE = 'empate'
 
 
 
@@ -50,7 +53,7 @@ class Tateti():
 		print('')
 
 
-	def jugar(self, ficha, fila, columna=None):
+	def movimiento(self, ficha, fila, columna=None):
 		'''
 		Define el carácter de una pieza del tablero.
 		Si se pasa solo el parametro fila, es como las teclas
@@ -126,35 +129,32 @@ class Tateti():
 				continue
 		return False
 
-# Pruebas
 
-posGanadoras = (
-	(0,1,2),
-	(3,4,5),
-	(6,7,8),
-	(0,3,6),
-	(1,4,7),
-	(2,5,8),
-	(0,4,8),
-	(2,4,6),
-)
-x=Tateti()
+	def tableroLleno(self):
+		'''
+		Devuelve True si el tablero está lleno
+		'''
 
-# for pos in posGanadoras:
-# 	for indice in pos:
-# 		x.jugar(X,indice+1)
-# 	x.ver()
-# 	assert x.gano(X)
-# 	x.reiniciar()
+		for celda in self.tablero:
+			if celda == NADA:
+				return False
+		return True
 
-from random import randrange
-for i in range(10):
-	pos = []
-	posibil = list(range(9))
-	for ii in range(3):
-		pos.append(posibil.pop(randrange(len(posibil))))
-	for indice in pos:
-		x.jugar(X,indice+1)
-	x.ver()
-	print(x.gano(X))
-	x.reiniciar()
+
+	def estado(self):
+		'''
+		Devuelve el estado actual del tablero
+		MOV si hay movimientos
+		GANA_X si ganó X
+		GANA_O si ganó O
+		EMPATE si hay un empate
+		'''
+
+		if self.gano(X):
+			return GANA_X
+		elif self.gano(O):
+			return GANA_O
+		elif self.tableroLleno():
+			return EMPATE
+		else:
+			return MOV
