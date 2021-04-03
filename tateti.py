@@ -78,7 +78,7 @@ class Tateti():
 		if ficha not in (X, O, NADA):
 			raise ValueError("'ficha' debe ser X, O o NADA")
 		
-		if type(lpos) != type(list()):
+		if type(lpos) is not list:
 			raise ValueError("'lpos' debe ser una lista")
 		
 		for pos in lpos:
@@ -217,7 +217,6 @@ if __name__ == '__main__':
 	def prompt():
 		return input('>>> ').lower()
 
-	
 	# Variables
 
 	instrucciones = """
@@ -260,13 +259,13 @@ Empieza usted, jugando con X
 				print(mensajeError)
 				comd = prompt()
 
-			if comd == 'q':
+			if comd == 'q':   # Salir
 				exit()
 
-			elif comd == 'h':
+			elif comd == 'h':   # Ayuda
 				print(instrucciones)
 
-			elif comd in ('1', '2', '3', '4', '5', '6', '7', '8', '9'):
+			elif comd in ('1', '2', '3', '4', '5', '6', '7', '8', '9'):   # Juego
 
 				# Turno Jugador:
 
@@ -296,10 +295,10 @@ Empieza usted, jugando con X
 
 				# Turno maquina:
 
-				print("Es mi turno. Pensando", end='')   # Espera un segundo para experiencia de usuario
+				print("Es mi turno. Pensando", end='', flush=True)   # Espera un segundo para experiencia de usuario
 				for _ in range(5):
 					sleep(0.5)
-					print('.',end='')
+					print('.',end='',flush=True)
 				print()
 
 				ttt.jugar(choice(ttt.movDisp))
