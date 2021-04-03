@@ -10,9 +10,12 @@ NADA = '-'
 X = 'x'
 O = 'o'
 MOV = 'hay movimientos'
-GANA_X = 'ganó X'
-GANA_O = 'ganó O'
-EMPATE = 'empate'
+GANA_X = 1
+GANA_O = -1
+EMPATE = 0
+MAX = 'max' # el jugador con X es el MAX
+MIN = 'min' # el jugador con O es el MIN
+
 
 # Clases
 
@@ -20,6 +23,8 @@ class Tateti():
 	'''
 	Clase que define un tablero de tateti
 	'''
+
+	# Funciones internas
 
 	def __init__(self):
 		
@@ -29,7 +34,7 @@ class Tateti():
 			NADA, NADA, NADA	# | 6  7  8 |
 		]
 
-		self.turno = 0
+		self.turno = X
 
 		self.movDisp = [1,2,3,4,5,6,7,8,9]
 
@@ -42,8 +47,118 @@ class Tateti():
 		s = '\n\tTABLERO:\n\n'
 		for fila in range(3):
 			s = s + "\t| %s  %s  %s |" % tuple(self.tablero[fila*3:fila*3+3]) + '\n'
-		s = s + "\n\tTURNO: %d\n" % self.turno
+		s = s + "\n\tTURNO: %s\n" % self.turno
 		return s
+
+	def _minimax(self, tablero, jugador):
+		'''
+		Implementación del algoritmo minimax para tateti
+		'''
+
+		estado = self._estado(tablero)
+		if estado != MOV:
+			return estado
+
+		# Jugador que maximiza, en este caso X
+		if jugador == MAX:
+
+			maxEvalu = -1
+			for indice, celda in enumerate(tablero):
+				if celda == NADA:
+
+					nuevoTablero = tablero.copy()
+					nuevoTablero[indice] = X # Recordar que X es el jugador MAX
+					
+					evalu = self._minimax(nuevoTablero, MIN)
+					maxEvalu = max(evalu, maxEvalu)
+
+					del nuevoTablero
+
+			return maxEvalu
+
+		# Jugador que minimiza, en este caso O
+		if jugador == MIN:
+
+			minEvalu = 1
+			for indice, celda in enumerate(tablero):
+				if celda == NADA:
+
+					nuevoTablero = tablero.copy()
+					nuevoTablero[indice] = O # Recordar que O es el jugador MIN
+
+					evalu = self._minimax(nuevoTablero, MAX)
+					minEvalu = min(evalu, minEvalu)
+
+					del nuevoTablero
+
+			return minEvalu
+
+	def _gano(self, tablero, ficha):
+		'''
+		Devuelve True si 'ficha' ganó, si no devuelve False
+		'''
+
+		posGanadoras = (
+			(0,1,2),
+			(3,4,5),
+			(6,7,8),
+			(0,3,6),
+			(1,4,7),
+			(2,5,8),
+			(0,4,8),
+			(2,4,6),
+		)
+
+		if ficha not in (NADA, X, O):
+			raise ValueError("'ficha' debe ser NADA, X o O")		
+
+		posConFicha=[]
+		for indice, celda in enumerate(tablero):
+			if celda == ficha:
+				posConFicha.append(indice)
+
+		for pos in posGanadoras:
+			if pos[0] in posConFicha:
+				if pos[1] in posConFicha:
+					if pos[2] in posConFicha:
+						return True
+					else:
+						continue
+				else:
+					continue
+			else:
+				continue
+		return False
+
+
+	def _lleno(self, tablero):
+		'''
+		Devuelve True si todas las celdas del tablero están ocupadas, si no, false
+		'''
+
+		for celda in tablero:
+			if celda == NADA:
+				return False
+		return True
+		
+
+	def _estado(self, tablero):
+		'''
+		Devuelve el estado actual del tablero
+		MOV si hay movimientos
+		GANA_X si ganó X
+		GANA_O si ganó O
+		EMPATE si hay un empate
+		'''
+
+		if   self._gano(tablero, X):
+			return GANA_X
+		elif self._gano(tablero, O):
+			return GANA_O
+		elif self._lleno(tablero):
+			return EMPATE
+		else:
+			return MOV
 
 
 	def ver(self):
@@ -60,7 +175,7 @@ class Tateti():
 
 	def verTurno(self):
 
-		print("\n\tTURNO: %d\n" % self.turno)
+		print("\n\tTURNO: %s\n" % self.turno)
 
 
 	def preparar(self, ficha, lpos):
@@ -93,17 +208,16 @@ class Tateti():
 				if celda in [X,O]:
 					cuent += 1
 					self.movDisp.remove(indice+1)
-			self.turno = cuent
+			self.turno = X if (cuent % 2 == 0) else O
 
 		return self.movDisp
 
 	
-	def jugar(self, pos, ficha='auto'):
+	def jugar(self, pos):
 		'''
-		Juega en la posición 'pos'. Selecciona la ficha
-		correspondiente automáticamente, o se puede
-		sobreescribir con 'ficha'.
-		Devuelve el turno actual.
+		Juega en la posición 'pos'. Elige la ficha a jugar
+		automáticamente. Las X juegan primero.
+		Devuelve los movimientos deisponibles
 		Las posiciones son:
 		| 1  2  3 |
 		| 4  5  6 |
@@ -116,17 +230,10 @@ class Tateti():
 		if pos not in self.movDisp:
 			raise ValueError("'%d' no es un movimiento disponible" % pos)
 
-		if ficha not in (X,O, 'auto'):
-			raise ValueError("'ficha' debe ser X, O o 'auto'")
 
-		if ficha == 'auto':
-			if self.turno % 2 == 0:
-				ficha = X
-			else:
-				ficha = O
 		
-		self.tablero[pos-1] = ficha
-		self.turno += 1
+		self.tablero[pos-1] = self.turno
+		self.turno = O if (self.turno == X) else X
 		self.movDisp.remove(pos)
 
 		return self.movDisp
@@ -143,47 +250,9 @@ class Tateti():
 			NADA, NADA, NADA
 		]
 
-		self.turno = 0
+		self.turno = X
 
 		self.movDisp = [1,2,3,4,5,6,7,8,9]
-	
-
-	def gano(self, ficha):
-		'''
-		Devuelve True si 'ficha' ganó, si no devuelve False
-		'''
-
-		posGanadoras = (
-			(0,1,2),
-			(3,4,5),
-			(6,7,8),
-			(0,3,6),
-			(1,4,7),
-			(2,5,8),
-			(0,4,8),
-			(2,4,6),
-		)
-
-		if ficha not in (NADA, X, O):
-			raise ValueError("'ficha' debe ser NADA, X o O")		
-
-		posConFicha=[]
-		for indice, celda in enumerate(self.tablero):
-			if celda == ficha:
-				posConFicha.append(indice)
-
-		for pos in posGanadoras:
-			if pos[0] in posConFicha:
-				if pos[1] in posConFicha:
-					if pos[2] in posConFicha:
-						return True
-					else:
-						continue
-				else:
-					continue
-			else:
-				continue
-		return False
 
 
 	def estado(self):
@@ -195,21 +264,62 @@ class Tateti():
 		EMPATE si hay un empate
 		'''
 
-		if   self.gano(X):
-			return GANA_X
-		elif self.gano(O):
-			return GANA_O
-		elif self.turno >= 9:
-			return EMPATE
-		else:
-			return MOV
+		return self._estado(self.tablero)
 
+
+	def mejorMovimiento(self):
+		'''
+		Devuelve el mejor movimiento
+		'''
+
+		try:
+			assert not self._lleno(self.tablero)
+		except AssertionError:
+			raise AssertionError("El tablero no tiene movimientos disponibles")
+
+		# Si juega X
+		if self.turno == X:
+			maxEvalu = -1
+			for mov in self.movDisp:
+				nuevoTablero = self.tablero.copy()
+				nuevoTablero[mov-1] = X
+				evalu = self._minimax(nuevoTablero, MIN)
+				if evalu >= 1:
+					return mov
+				if evalu >= maxEvalu:
+					maxEvalu = evalu
+					mejorMov = mov
+
+			return mejorMov
+
+		# Si juega O
+		if self.turno == O:
+			minEvalu = 1
+			for mov in self.movDisp:
+				nuevoTablero = self.tablero.copy()
+				nuevoTablero[mov-1] = O
+				evalu = self._minimax(nuevoTablero, MAX)
+				if evalu <= -1:
+					return mov
+				if evalu <= minEvalu:
+					minEvalu = evalu
+					mejorMov = mov
+
+			return mejorMov
+			
+
+	def cualquierMovimiento(self):
+
+		from random import choice
+		return choice(self.movDisp)
+
+
+		
 
 # Programa principal
 
 if __name__ == '__main__':
 
-	from random import choice
 	from time import sleep
 
 	# Funciones
@@ -301,7 +411,7 @@ Empieza usted, jugando con X
 					print('.',end='',flush=True)
 				print()
 
-				ttt.jugar(choice(ttt.movDisp))
+				ttt.jugar(ttt.mejorMovimiento())
 				ttt.ver()
 
 				if ttt.estado() == GANA_O:
